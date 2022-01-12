@@ -1,0 +1,12 @@
+The best 9 of movies
+
+Title				   Income	 Comment	
+Titanic				600788188	Above Average
+Star Wars				460998007	Above Average
+E.T. The Extra-Terrestrial				434949459	below average
+Star Wars: Episode I - The Phantom Menace				431088295	below average
+Spider-Man				403706375	below average
+The Lord of the Rings: The Return of the King				368210170	below average
+Jurassic Park				570679470	Above Average
+The Lord of the Rings: The Two Towers				341748130	below average
+Finding Nemo				339714367	below average
