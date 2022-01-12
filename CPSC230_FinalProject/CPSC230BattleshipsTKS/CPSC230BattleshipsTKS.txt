@@ -1,0 +1,1021 @@
+
+
+
+/**************************************
+Headers
+**************************************/
+//input/output stream
+#include <iostream>
+//for random seeds
+#include <cstdlib>
+//for math libraries
+#include <cmath>
+//strams for files and strings
+#include <fstream>
+#include <sstream>
+#include <string>
+//input and output manipulation
+#include <iomanip>
+//stacks
+#include <stack>
+#include <ctime>
+using namespace std;
+
+/*********************************************
+Constant Variables - Maximum Size of the Board
+*********************************************/
+//maximum size of the board will be a 15 x 15 board for play
+const int MAX_ROWS = 15;//Maximum length of the rows: Rows are labeled: A-O
+const int MAX_COLS = 15;//Maximum length of the columns: Columns are labeled:  1-15
+
+/*******************************************
+Function Prototype  - Game Instructions
+********************************************/
+//displays the logo
+void LogoDisplay();
+
+/*******************************************
+Function Prototype  - Game Instructions
+********************************************/
+//displays the user menu choices
+void DisplayMenu();
+
+/*******************************************
+Function Prototype  - Game Instructions
+********************************************/
+//provides game instructions to user
+void GameInstruct(ifstream& gameInstructions);
+
+/****************************************************
+Function Prototype  - Initializing the Game Board
+****************************************************/
+//initializes the game boards
+void initializeBoards(char attackBoard[][MAX_ROWS], char shipBoard[][MAX_ROWS], char enemyBoard[][MAX_ROWS]);
+
+/****************************************************
+Function Prototype  - Display Game Boards (enemy)
+****************************************************/
+void displayBoards(char[][MAX_ROWS], char[][MAX_ROWS]);
+
+/****************************************************
+Function Prototype  - Display User Board
+****************************************************/
+void displayPlayerBoard(char[][MAX_ROWS]);
+
+/****************************************************
+Function Prototype  - Place Ships
+****************************************************/
+void placeEnemyShips(char [][MAX_ROWS]);
+void placePlayerShips(char [][MAX_ROWS]);
+
+/****************************************************
+Function Prototype  - Attack!
+****************************************************/
+void attack(char[][MAX_ROWS], char[][MAX_ROWS], char[][MAX_ROWS], int[]);
+/****************************************************
+Function Prototype  - RevPush
+****************************************************/
+void revPush(int, int, char);
+/****************************************************
+Function Prototypes  - Clear and Pause
+****************************************************/
+void clear();
+void pause();
+/****************************************************
+Function Prototypes  - Do the Ships Overlap
+****************************************************/
+bool isShipsOverlap(char[][MAX_ROWS], int, int, int, int);
+/****************************************************
+Function Prototypes  - Player Hit
+****************************************************/
+char didHit(char[][MAX_ROWS], int, int);
+/****************************************************
+Function Prototypes  - Random Hit AI
+****************************************************/
+char hitRandom(char [][MAX_ROWS], char [][MAX_ROWS]);
+/************************************************************
+Function Prototypes  - Converts Character Input to Number
+************************************************************/
+int charToNum(char);
+/*************************************************************
+Function Prototypes  - Converts Ships to Represented Numbers
+*************************************************************/
+int shipToNum(char);
+
+
+bool shouldUseLogic = false;
+bool isMultipleShips = false;
+bool AIPrevHit = false;
+int numOfShips = 0;
+int shipsLeft;
+int AIDir = -1;
+int AIEnds = 0;
+stack <int> xStack;
+stack <int> yStack;
+stack <char> dirStack;
+
+///*******************************************
+//Function Prototype  - Valid Commands
+//********************************************/
+//bool isvalid(char& row, int& column);
+
+int main()
+{
+	//srand: will not use current time as seed for random generator
+	srand(time(NULL));
+	//pre-game boards
+	//ship arrays based on how many spaces they take up and health for player and enemy
+	int playerHealth[] = { 5, 4, 3, 3, 2 };
+	int enemyHealth[] = { 5, 4, 3, 3, 2 };
+	string shipNames[] = { "Aircraft Carrier", "Battleship", "Submarine", "Cruiser", "Destroyer" };
+	//string to hold user's namegoogl
+	string username;
+	//user continue game variable - playagain starts at Y but can become no if user chooses so
+	char playagain = 'Y';
+	//variable for input stream for instruction file
+	ifstream instructions;
+	//name of the instruction files
+	string input_file = "Battleship.txt";
+	//usergame choice - symbolized by number
+	int user_gamechoice;
+	//do-while loop here - for the case where the user wants to play the game again or view instructions again
+	do
+	{
+		//introduce user to the program using ASCII logo
+		LogoDisplay();
+		//greet user and ask for their name
+		std::cout << "\nHello and welcome to Battleships! What's your name: " << endl;
+		//get user name using getline
+		getline(std::cin, username);
+		//tell user about program options
+		std::cout << "Welcome, " << username << " . Please enter a number from one of the following options and press enter: " << endl;
+		//display game menu
+		DisplayMenu();
+		//get user's game choice
+		std::cin >> user_gamechoice;
+        //check if the user's entry was valid
+		if ((user_gamechoice != 1) && (user_gamechoice != 2) && (user_gamechoice != 3))
+		{
+			//if it does not match, then assign value for default case
+			user_gamechoice = 10;
+		}
+		//while ((user_gamechoice != 1) && (user_gamechoice != 2) && (user_gamechoice != 3))
+		//{
+		//	//if it does not match, then prompt user until a correct value is entered
+		//	std::cout << "\nThat wasn't a valid entry! Please choose from one of the following." << endl;
+		//	DisplayMenu();
+		//	std::cin >> user_gamechoice;
+		//}
+		//use switch case for user_game choices
+		switch (user_gamechoice)
+		{
+			/**************************************
+			Case 1 - User Wants to Know How to Play
+			**************************************/
+			//case 1 - the user wants to know how to play the game
+		case 1:
+		{
+			//open input file
+			instructions.open(input_file, ios::in);
+			//if the file failed to open, instructions not found. Still allow user to play the game
+			if (instructions.fail())
+			{
+				std::cout << "\nOops! Could not find the instructions for Battleships! Please check the location or file name. Going back to the main menu.\n" << endl;
+				break;
+			}
+			else
+			{
+				//make function call to the read instructions function
+				std::cout << "\n";
+				GameInstruct(instructions);
+			}
+			break;
+		}
+		/**************************************
+		Case 2 - Playing the Game!
+		**************************************/
+		//case 2 - player wants to play the game
+		case 2:
+		{
+			char attackBoard[MAX_ROWS][MAX_COLS]; //attack board
+			char shipBoard[MAX_ROWS][MAX_COLS]; //the player shipboard
+			char enemyBoard[MAX_ROWS][MAX_COLS]; //the enemy shipboard
+
+			char hit;
+			bool done = false;
+			bool didSink = false; //did the ship sink?
+			bool playerWin = false; //did the player win?
+			bool enemyWin = false; //did the player lose?
+			//since we are playing the game, generate the game boards for the player and enemy
+			initializeBoards(attackBoard, shipBoard, enemyBoard);
+			placeEnemyShips(enemyBoard);
+			placePlayerShips(shipBoard);
+			//self-created clear function
+			clear();
+			//display the boards for the user's boards and the attacked board
+			displayBoards(attackBoard, shipBoard);
+			std::cout << "\n\n\n";
+			std::cout << "Press enter to continue...";
+			std::cin.get();
+			std::cin.get();
+			clear();
+			while (!done)
+			{
+				clear();
+				hit = hitRandom(shipBoard, attackBoard);
+				if (hit != '#')
+				{
+					int hitNum = shipToNum(hit);
+					playerHealth[hitNum]--;
+				}
+				for (int i = 0; i < 5; i++)
+				{
+					if (playerHealth[i] == 0)
+					{
+						pause();
+						displayBoards(attackBoard, shipBoard);
+						std::cout << "\n\nThe enemy sunk your " << shipNames[i] << ", " << username << "!\n";
+						playerHealth[i] = -1;
+						if (!isMultipleShips)
+						{
+							xStack = stack<int>();
+							yStack = stack<int>();
+							dirStack = stack<char>();
+							shouldUseLogic = false;
+							AIPrevHit = false;
+							numOfShips = 0;
+							shipsLeft = 0;
+							AIDir = -1;
+							AIEnds = 0;
+						}
+						else
+						{
+							shipsLeft--;
+							if (shipsLeft == 0)
+							{
+								xStack = stack<int>();
+								yStack = stack<int>();
+								dirStack = stack<char>();
+								shouldUseLogic = false;
+								AIPrevHit = false;
+								numOfShips = 0;
+								shipsLeft = 0;
+								AIDir = -1;
+								AIEnds = 0;
+							}
+						}
+						didSink = true;
+					}
+				}
+				if (didSink)
+				{
+					std::cout << "Press enter to continue...";
+					didSink = false;
+				}
+				else
+				{
+					std::cout << "Press enter to continue...";
+				}
+				std::cin.get();
+				attack(shipBoard, attackBoard, enemyBoard, enemyHealth);
+				for (int i = 0; i < 5; i++)
+				{
+					if (enemyHealth[i] == 0)
+					{
+						clear();
+						displayBoards(attackBoard, shipBoard);
+						std::cout << "\n\nYou sunk the enemy's " << shipNames[i] << "!\n";
+						enemyHealth[i] = -1;
+						std::cout << "Press enter to continue...";
+						std::cin.get();
+					}
+				}
+				playerWin = true;
+				enemyWin = true;
+				for (int i = 0; i < 5; i++)
+				{
+					if (playerHealth[i] != -1)
+					{
+						enemyWin = false;
+					}
+					if (enemyHealth[i] != -1)
+					{
+						playerWin = false;
+					}
+				}
+				if (playerWin || enemyWin)
+				{
+					done = true;
+				}
+			}
+			clear();
+			if (playerWin==true)
+			{
+				std::cout << "Congratulations, " << username << "! You Won!";
+			}
+			else
+			{
+				std::cout << "Sorry, " << username << " you lost. Try again..?";
+			}
+			break;
+		}
+		/**************************************
+		Case 3 - Quit
+		**************************************/
+		//case 3 - player wants to quit
+		case 3:
+		{
+			std::cout << "\nHope to see you again soon, " << username << "!" << endl;
+			return 0;
+			break;
+		}
+		/**************************************
+        Default() Case
+        **************************************/
+		default:
+		{
+			std::cout << "\nThat wasn't a valid entry!" << endl;
+			return 0;
+			break;
+		}
+		//tell user they can try again if they have lost or won  
+		cout << "Would you like to try again? Select (Y) for yes or press any other key to end." << endl;
+		//get user input
+		cout << " " << endl;
+		cin >> playagain;
+		//take even user input that is lowercase by converting to upper
+		playagain = toupper(playagain);
+		//while condition
+		if (playagain != 'Y')
+		{
+			//tell user see them later
+			cout << "\nThank you for playing, " << username << "! Come back soon!" << endl;
+		}
+	}
+} while (playagain == 'Y');
+//return - end main function 
+return 0;
+}
+
+/*******************************************
+Function Defintiion  - Logo Display
+********************************************/
+//displays the game logo
+void LogoDisplay()
+{
+	cout << "*******************************************************************************************************************" << endl;
+	cout << "*   /$$$$$$$              /$$     /$$     /$$                     /$$       /$$                     /$$ /$$ /$$   *" << endl;
+	cout << "*  | $$__  $$            | $$    | $$    | $$                    | $$      |__/                    | $$| $$| $$   *" << endl;
+	cout << "*  | $$  \ $$  /$$$$$$  /$$$$$$ /$$$$$$  | $$  /$$$$$$   /$$$$$$$| $$$$$$$  /$$  /$$$$$$   /$$$$$$$| $$| $$| $$    *" << endl;
+	cout << "*  | $$$$$$$  |____  $$|_  $$_/|_  $$_/  | $$ /$$__  $$ /$$_____/| $$__  $$| $$ /$$__  $$ /$$_____/| $$| $$| $$   *" << endl;
+	cout << "*  | $$__  $$  /$$$$$$$  | $$    | $$    | $$| $$$$$$$$|  $$$$$$ | $$  \ $$| $$| $$  \ $$|  $$$$$$ |__/|__/|__/     *" << endl;
+	cout << "*  | $$  \ $$ /$$__  $$  | $$ /$$| $$ /$$| $$| $$_____/ \____  $$| $$  | $$| $$| $$  | $$ \____  $$                  *" << endl;
+	cout << "*  | $$$$$$$/|  $$$$$$$  |  $$$$/|  $$$$/| $$|  $$$$$$$ /$$$$$$$/| $$  | $$| $$| $$$$$$$/ /$$$$$$$/ /$$ /$$ /$$   *" << endl;
+	cout << "*  | _______ / \_______ / \___ / \___/  |__ / \_______/|_______/ |__/  |__/|__/| $$____/ |_______/ |__/|__/|__ /      *" << endl;
+	cout << "*                                                                              | $$                               *" << endl;
+	cout << "*                                                                              | $$                               *" << endl;
+	cout << "*                                                                              |__/                               *" << endl;
+	cout << "*******************************************************************************************************************" << endl;
+	return;
+}
+
+/*******************************************
+Function Prototype  - Display Menu
+********************************************/
+//displays the user menu choices
+void DisplayMenu()
+{
+	cout << "****************************************************************" << endl;
+	cout << "*   1.) How do I play Battleships?                             *" << endl;
+	cout << "*   2.) Play!                                                  *" << endl;
+	//cout << "*   3.) Player vs CPU                                          *" << endl;
+	//cout << "*   4.) CPU vs CPU demonstration                               *" << endl;
+	cout << "*   3.) Press '3' and enter to quit                            *" << endl;
+	cout << "****************************************************************" << endl;
+	return;
+}
+
+
+
+/*******************************************
+	Function Definition  - Game Instructions
+********************************************/
+//prints instructions to screen from text file
+void GameInstruct(ifstream& gameInstructions)
+{
+	//user choice to play after reading instructions
+	char play_game = 'Y';
+	//string line
+	string line;
+	//check to see if the end-of-the file has been reached
+	while (!gameInstructions.eof())
+	{
+		//while taking in information from file
+		while (getline(gameInstructions, line))
+		{
+			//print out the instructions line by line
+			cout << line << endl;
+		}
+	}
+	//close the instructions file
+	gameInstructions.close();
+	//ASK USER if they want to play the game or quit
+	cout << "\nWould you like to play Battleships? Enter (Y)es to return to the main menu or any other key to quit.";
+	cin >> play_game;
+	play_game = toupper(play_game);
+	//check if user wants to play game
+	if (play_game != 'Y')
+	{
+		//exit the game - user doesn't want to play
+		exit(1);
+	}
+	//else cirumstances play
+	else
+	{
+		//return to main menu
+	}
+}
+
+/****************************************************
+Function Definition  - Initializing the Game Board
+****************************************************/
+//displays the logo
+void initializeBoards(char attackBoard[][MAX_ROWS], char shipBoard[][MAX_ROWS], char enemyBoard[][MAX_ROWS])
+{
+	int i, a;
+	for (i = 0; i < MAX_ROWS; i++)
+	{
+		for (a = 0; a < MAX_ROWS; a++)
+		{
+			attackBoard[a][i] = ' ';
+			shipBoard[a][i] = ' ';
+			enemyBoard[a][i] = ' ';
+		}
+	}
+	return;
+}
+
+/**********************************************************
+Function Definition  - Display the Game Board for enemy
+**********************************************************/
+void displayBoards(char attackBoard[][MAX_ROWS], char enemyBoard[][MAX_ROWS])
+{
+	//display for enemyboard
+	int i, a;
+	cout << "          Enemy Attack Board\n" << "  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O  \n";
+	for (int i = 0; i < MAX_ROWS; i++)
+	{
+		if (i + 1 != MAX_ROWS)
+		{
+			cout << "";
+		}
+		cout << i + 1;
+		for (a = 0; a < MAX_ROWS; a++)
+		{
+			cout << "[" << attackBoard[a][i] << "]";
+		}
+		cout << endl;
+	}
+	cout << "\n           Your Ship Board\n" << "  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O  \n";
+	for (i = 0; i < MAX_ROWS; i++) {
+		if (i + 1 != MAX_ROWS) {
+			cout << "";
+		}
+		cout << i + 1;
+		for (a = 0; a < MAX_ROWS; a++) {
+			cout << "[" << enemyBoard[a][i] << "]";
+		}
+		cout << endl;
+	}
+	return;
+}
+
+/**********************************************************
+Function Definition  - Display Player Boards
+**********************************************************/
+
+
+void displayPlayerBoard(char board[][MAX_ROWS])
+{
+	//integer counters 
+	int i, a;
+	cout << "            Your Placement Board\n" << "  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O  \n";
+	for (i = 0; i < MAX_ROWS; i++) {
+		if (i + 1 != MAX_ROWS) {
+			cout << "";
+		}
+		cout << i + 1;
+		for (a = 0; a < MAX_ROWS; a++) {
+			cout << "[" << board[a][i] << "]";
+		}
+		cout << endl;
+	}
+	return;
+}
+
+/****************************************************
+Function Definitions  - Placing the Ships
+****************************************************/
+void placeEnemyShips(char enemyBoard[][MAX_ROWS])
+{
+	bool done;
+	int dir;
+	int startX;
+	int startY;
+	int shipLength[] = { 5, 4, 3, 3, 2 };
+	char shipLetter[] = { 'A', 'B', 'S', 'C', 'D' };
+	int ship;
+	for (ship = 0; ship < 5; ship++)
+	{
+		done = false;
+		while (!done)
+		{
+			dir = rand() % 2;
+			startX = rand() % MAX_ROWS;
+			startY = rand() % MAX_ROWS;
+			done = isShipsOverlap(enemyBoard, startX, startY, dir, shipLength[ship]);
+			if (startX + shipLength[ship] >= MAX_ROWS || startY + shipLength[ship] >= MAX_ROWS)
+			{
+				done = false;
+			}
+		}
+		if (dir == 0) {
+			for (int x = startX; x < startX + shipLength[ship]; x++) {
+				enemyBoard[x][startY] = shipLetter[ship];
+			}
+		}
+		else {
+			for (int y = startY; y < startY + shipLength[ship]; y++) {
+				enemyBoard[startX][y] = shipLetter[ship];
+			}
+		}
+	}
+	return;
+}
+
+void placePlayerShips(char shipBoard[][MAX_ROWS])
+{
+	//variables for board
+	//for the character corresponding to column
+	char xChar;
+	//x and y coordinates for gameplay
+	int x;
+	int y;
+	//direction for vertical or horizontal placement
+	int dir;
+	//ship number for the loop
+	int shipNumber = 0;
+	//check if user wants to enter their ship placement manually or randomly
+	int manRand = 0;
+	//names of ships
+	string names[] = { "Aircraft Carrier", "Battleship", "Submarine", "Cruiser", "Destroyer" };
+	//representation of thoe ships by letter
+	char shipLetter[] = { 'A', 'B', 'S', 'C', 'D' };
+	//ships lengths
+	int lengths[] = { 5, 4, 3, 3, 2 };
+	//booleans to determine if user placement is done and whether or not ships overlap
+	bool done = false;
+	bool isOverlap = true;
+	//ask user if they want to place ships manually or randomized by CPU
+	cout << "Would you like to place your ships manually, or at random?\n";
+	cout << "1.) Manual\n";
+	cout << "2.) Random\n";
+	cout << "Enter choice (1/2): ";
+	//input for manual implementation
+	cin >> manRand;
+	if (manRand == 2) {
+		done = true;
+		placeEnemyShips(shipBoard);
+	}
+	//while user placement of ships are not done
+	while (!done)
+	{
+		//user defined clear function - helpful with clearing board and displaying new board as ships are set
+		clear();
+		displayPlayerBoard(shipBoard);
+		//tell user what ships they are placing
+		cout << "\nYou are placing the " << names[shipNumber] << ".\n";
+		cout << "Its length is " << lengths[shipNumber] << ".\n\n";
+		//where should the ship be placed by letters
+		cout << "Where should the front of the ship be? (A-O): ";
+		cin >> xChar;
+		//check if user has not entered a valid character placement for the gameboard
+		while (xChar != 'A' && xChar != 'B' && xChar != 'C' && xChar != 'D' && xChar != 'E' && xChar != 'F' && xChar != 'G' && xChar != 'H' && xChar != 'I' && xChar != 'J' && xChar != 'K' && xChar != 'L' && xChar != 'M' && xChar != 'N' && xChar != 'O')
+		{
+			//messages if user did not enter the proper board placement
+			cout << "Please enter a valid starting position\n\n";
+			cout << "You are placing the " << names[shipNumber] << ".\n";
+			cout << "Its length is " << lengths[shipNumber] << ".\n";
+			cout << "Where should the front of the ship be? (A-O): ";
+			//prompt user to enter column character again
+			cin >> xChar;
+		}
+		//convert letter to integer
+		x = charToNum(xChar);
+		//clear to make board easier to see
+		clear();
+		displayPlayerBoard(shipBoard);
+		//ask user to enter starting row (1-15)
+		cout << "\n\nPlease enter the other starting position. (1-15): ";
+		cin >> y;
+		//decrement y by one
+		y--;
+		int startX = x;
+		int startY = y;
+		clear();
+		displayPlayerBoard(shipBoard);
+		//choose ships direction
+		cout << "What direction would you like the ship to face?\n";
+		cout << "1. Vertical\n";
+		cout << "2. Horizontal\n";
+		//user input for ship direction
+		cin >> dir;
+		//check if user input a valid direction
+		while (dir != 1 && dir != 2) 
+		{
+			clear();
+			displayPlayerBoard(shipBoard);
+			cout << "Please enter a valid direction:\n\n";
+			cout << "What direction would you like the ship to face?\n";
+			cout << "1.) Vertical\n";
+			cout << "2.) Horizontal\n";
+			cin >> dir;
+		}
+		if (dir == 2) 
+		{
+			dir -= 2;
+		}
+		isOverlap = isShipsOverlap(shipBoard, startX, startY, dir, lengths[shipNumber]);
+		if (isOverlap) 
+		{
+			if (dir == 0) 
+			{
+				for (; x < startX + lengths[shipNumber]; x++) 
+				{
+					shipBoard[x][y] = shipLetter[shipNumber];
+				}
+			}
+			else 
+			{
+				for (; y < startY + lengths[shipNumber]; y++) 
+				{
+					shipBoard[x][y] = shipLetter[shipNumber];
+				}
+			}
+			if (shipNumber < 4) 
+			{
+				shipNumber++;
+			}
+			else {
+				done = true;
+			}
+		}
+		else {
+			cout << "Please enter valid coordinates for the ship...\n";
+			pause();
+			cin.get();
+		}
+	}
+	return;
+}
+
+/****************************************************
+Function Definitions  - Hit Random
+****************************************************/
+char hitRandom(char shipBoard[][MAX_ROWS], char attackBoard[][MAX_ROWS]) {
+	int x;
+	int y;
+	bool done = false;
+	bool stackGood = false;
+	bool justMiss = false;
+	char didHitChar;
+	string letters = "ABCDEFGHIJKLMNO";
+	x = rand() % MAX_ROWS;
+	y = rand() % MAX_ROWS;
+	if (shipBoard[x][y] == '#' || shipBoard[x][y] == '@') {
+		done = true;
+		hitRandom(shipBoard, attackBoard);
+	}
+	if (!xStack.empty()) {
+		while (!stackGood) {
+			if (xStack.top() < 0 || yStack.top() < 0 || shipBoard[xStack.top()][yStack.top()] == '@' || shipBoard[xStack.top()][yStack.top()] == '#') {
+				if (xStack.top() < 0 || yStack.top() < 0 || xStack.top() > 0 || yStack.top() > 0) {
+					AIEnds++;
+				}
+				xStack.pop();
+				yStack.pop();
+				dirStack.pop();
+			}
+			else {
+				stackGood = true;
+			}
+		}
+	}
+	if (!done) {
+		if (!shouldUseLogic) {
+			didHitChar = didHit(shipBoard, x, y);
+			if (didHit(shipBoard, x, y) != '#') {
+				shipBoard[x][y] = '#';
+				displayBoards(attackBoard, shipBoard);
+				cout << "\nEnemy attacked at " << letters.at(x) << " " << y + 1 << endl;
+				cout << "They hit...\n";
+				shouldUseLogic = true;
+				numOfShips++;
+
+				xStack.push(x + 1);
+				yStack.push(y);
+				dirStack.push('R');
+
+				xStack.push(x - 1);
+				yStack.push(y);
+				dirStack.push('L');
+
+				xStack.push(x);
+				yStack.push(y + 1);
+				dirStack.push('D');
+
+				xStack.push(x);
+				yStack.push(y - 1);
+				dirStack.push('U');
+
+			}
+			else {
+				shipBoard[x][y] = '@';
+				displayBoards(attackBoard, shipBoard);
+				cout << "\nEnemy attacked at " << letters.at(x) << " " << y + 1 << endl;
+				cout << "They missed!\n";
+			}
+		}
+		else {
+			didHitChar = didHit(shipBoard, xStack.top(), yStack.top());
+			if (didHit(shipBoard, xStack.top(), yStack.top()) != '#') {
+				shipBoard[xStack.top()][yStack.top()] = '#';
+				displayBoards(attackBoard, shipBoard);
+				cout << "\nEnemy attacked at " << letters.at(xStack.top()) << " " << yStack.top() + 1 << endl;
+				cout << "They hit...\n";
+				if (!isMultipleShips) {
+					numOfShips++;
+				}
+				AIPrevHit = true;
+				x = xStack.top();
+				y = yStack.top();
+				xStack.pop();
+				yStack.pop();
+				switch (dirStack.top()) {
+				case 'U':   dirStack.pop();
+					revPush(x - 1, y, 'L');
+					revPush(x + 1, y, 'R');
+
+					xStack.push(x);
+					yStack.push(y - 1);
+					dirStack.push('U');
+					break;
+
+				case 'D':   dirStack.pop();
+					revPush(x - 1, y, 'L');
+					revPush(x + 1, y, 'R');
+
+					xStack.push(x);
+					yStack.push(y + 1);
+					dirStack.push('D');
+					break;
+
+				case 'L':   dirStack.pop();
+					revPush(x, y - 1, 'U');
+					revPush(x, y + 1, 'D');
+
+					xStack.push(x - 1);
+					yStack.push(y);
+					dirStack.push('L');
+					break;
+
+				case 'R':   dirStack.pop();
+					revPush(x, y - 1, 'U');
+					revPush(x, y + 1, 'D');
+
+					xStack.push(x + 1);
+					yStack.push(y);
+					dirStack.push('R');
+					break;
+				}
+			}
+			else {
+				shipBoard[xStack.top()][yStack.top()] = '@';
+				displayBoards(attackBoard, shipBoard);
+				cout << "\nEnemy attacked at " << letters.at(xStack.top()) << " " << yStack.top() + 1 << endl;
+				cout << "They missed!\n";
+				xStack.pop();
+				yStack.pop();
+				dirStack.pop();
+				if (AIPrevHit) {
+					AIEnds++;
+				}
+			}
+			if (AIEnds == 2 && !isMultipleShips) {
+				isMultipleShips = true;
+				shipsLeft = numOfShips;
+			}
+		}
+	}
+	return didHitChar;
+}
+
+/****************************************************
+Function Definitions  - Attack!
+****************************************************/
+void attack(char shipBoard[][MAX_ROWS], char attackBoard[][MAX_ROWS], char enemyBoard[][MAX_ROWS], int enemyHealth[])
+{
+	int x;
+	int y;
+	char charX;
+
+	clear();
+	displayBoards(attackBoard, shipBoard);
+	cout << "\n\n\nPlease enter the row of the attack (A-O): ";
+	cin >> charX;
+	clear();
+	displayBoards(attackBoard, shipBoard);
+	cout << "\n\n\nPlease enter the column of the attack (1-15): ";
+	cin >> y;
+
+	x = charToNum(charX);
+	y -= 1;
+
+	if (enemyBoard[x][y] == '#' || enemyBoard[x][y] == '@') {
+		clear();
+		cout << "Please enter a coordinate that has not already been entered...\n";
+		pause();
+		attack(shipBoard, attackBoard, enemyBoard, enemyHealth);
+	}
+	else if (enemyBoard[x][y] != ' ') {
+		int shipType = shipToNum(enemyBoard[x][y]);
+		enemyHealth[shipType]--;
+		clear();
+		enemyBoard[x][y] = '#';
+		attackBoard[x][y] = '#';
+		displayBoards(attackBoard, shipBoard);
+		cout << "\n\nYou hit one of their ships!\n";
+		cout << "Press enter to continue...";
+		cin.get();
+		cin.get();
+	}
+	else {
+		clear();
+		enemyBoard[x][y] = '@';
+		attackBoard[x][y] = '@';
+		displayBoards(attackBoard, shipBoard);
+		cout << "\n\nMissed!\n";
+		cout << "Press enter to continue...";
+		cin.get();
+		cin.get();
+	}
+	return;
+}
+
+/****************************************************
+Function Definitions  - RevPush
+****************************************************/
+void revPush(int x, int y, char dir) 
+{
+	stack <int> xStack;
+	stack <int> yStack;
+	stack <char> dirStack;
+
+	stack <int> tempX;
+	stack <int> tempY;
+	stack <char> tempDir;
+	while (!xStack.empty()) {
+		tempX.push(xStack.top());
+		tempY.push(yStack.top());
+		tempDir.push(dirStack.top());
+
+		xStack.pop();
+		yStack.pop();
+		dirStack.pop();
+	}
+	xStack = stack<int>();
+	yStack = stack<int>();
+	dirStack = stack<char>();
+	xStack.push(x);
+	yStack.push(y);
+	dirStack.push(dir);
+
+	while (!tempX.empty()) {
+		xStack.push(tempX.top());
+		yStack.push(tempY.top());
+		dirStack.push(tempDir.top());
+
+		tempX.pop();
+		tempY.pop();
+		tempDir.pop();
+	}
+	return;
+}
+
+/****************************************************
+Function Definitions  - Clear and Pause
+****************************************************/
+void clear()
+{
+	for (int i = 0; i < 10; i++) {
+		cout << endl;
+	}
+	return;
+}
+
+void pause()
+{
+	cout << "Press enter to continue....";
+	cin.get();
+	clear();
+	return; 
+}
+
+/****************************************************
+Function Definitions  - Do the Ships Overlap?
+****************************************************/
+bool isShipsOverlap(char board[][MAX_ROWS], int x, int y, int dir, int shipLength)
+//check to see if any of the ships are overlapping
+{
+	bool clear = true;
+	int startX = x;
+	int startY = y;
+	if (dir == 0) {
+		for (; x < startX + shipLength; x++) {
+			if (board[x][y] != ' ') {
+				clear = false;
+			}
+		}
+	}
+	else {
+		for (; y < startY + shipLength; y++) {
+			if (board[x][y] != ' ') {
+				clear = false;
+			}
+		}
+	}
+	return clear;
+}
+
+/****************************************************
+Function Definitions  - Did It Hit?
+****************************************************/
+char didHit(char board[][MAX_ROWS], int x, int y) 
+{
+	//was a ship hit by the player or opponent?
+	//character to represent ship type
+	char shipType;
+	//if the board is empty at that point, you did 
+	if (board[x][y] != ' ') 
+	{
+		shipType = board[x][y];
+	}
+	else {
+		shipType = '#';
+	}
+	return shipType;
+}
+
+/****************************************************
+Function Definitions  - Characters to Numbers
+****************************************************/
+int charToNum(char letter) 
+{
+	//ineteger character to number
+	return letter - 65;
+}
+
+/****************************************************
+Function Definitions  - Ship into Numbers
+****************************************************/
+int shipToNum(char letter)
+{
+	//convert the ship number to characters for board placement
+	int num = 0;
+	switch (letter) 
+	{
+	//for aircraft carrier
+	case 'A':
+		num = 0;
+		break;
+    //for battleship carrier
+	case 'B':
+		num = 1;
+		break;
+    //for submarine
+	case 'S':
+		num = 2;
+		break;
+    //for cruiser
+	case 'C':
+		num = 3;
+		break;
+    //for destroyer
+	case 'D':
+		num = 4;
+		break;
+	}
+	return num;
+}
+
+

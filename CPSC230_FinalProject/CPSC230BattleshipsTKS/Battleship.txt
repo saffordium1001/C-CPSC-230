@@ -1,0 +1,231 @@
+/*************
+*How to Play!*
+*************/
+
+Battleships is a fun strategy game where you will need to guess the location of your opponent's ships in their naval fleet
+and launch an attack to hit their ship. In this version, you will be playing against a rather simple computer AI
+system. 
+
+The location of your ships are concealed from your opponent and vice versa. You will take turns against your opponent
+calling "shots" at the other player's ships. Your goal is to destroy the opposing player's fleet and to avoid losing your
+ships - this AI does attack back!
+
+For this C++ version, you will be playing on a 15 x 15 square grid as will your opponent. Each of your fleet's ships will
+be occupying a marked number of grid spaces once they are set. These are:
+
+-------------------------------------
+No. |	Class of ship 	    | Size  |
+-------------------------------------
+1   |	Aircraft Carrier    |	5   |
+-------------------------------------
+2   |	Battleship 	    |   4   |
+-------------------------------------
+3   |	Cruiser 	    |   3   |
+-------------------------------------
+4   |	Submarine 	    |   3   |
+-------------------------------------
+5   |	Destroyer 	    |   2   |
+-------------------------------------
+
+Accordingly, the size of these ships also have a correspondence with the number of hits they can take. For example, 
+the submarine since it occupies three spaces will take three hits to destroy.
+
+An example grid for this game may look like:
+
+           Your Ship Board
+  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O
+1[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+2[ ][ ][ ][ ][ ][ ][ ][ ][C][C][C][ ][ ][ ][ ]
+3[ ][ ][A][A][A][A][A][ ][ ][ ][ ][ ][ ][ ][ ]
+4[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+5[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+6[ ][ ][S][S][S][ ][B][B][B][B][ ][ ][ ][ ][ ]
+7[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+8[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+9[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+10[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+11[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+12[ ][ ][ ][D][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+13[ ][ ][ ][D][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+14[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+15[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+
+While your enemy's grid could look like:
+
+          Enemy Attack Board
+  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O
+1[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+2[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+3[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+4[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+5[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+6[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+7[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+8[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+9[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+10[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+11[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+12[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+13[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+14[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+15[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+
+Your enemy's attack board will be hidden from view. Instead, it will only be marked with symbols corresponding to
+"hits" or "misses" which can be discussed a bit later. 
+
+You have the option to have your ships sorted randomly by the CPU or you can select where to place your ships manually.
+This will look like the following:
+
+Would you like to place your ships manually, or at random?
+1.) Manual
+2.) Random
+Enter choice (1/2):
+
+If you enter '1' and press enter, you will be given the ship name and size of the ship you are currently placing.
+You will also be asked which grid square you would like to place the head of your ship at. For example:
+
+            Your Placement Board
+  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O
+1[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+2[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+3[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+4[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+5[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+6[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+7[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+8[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+9[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+10[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+11[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+12[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+13[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+14[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+15[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+
+You are placing the Aircraft Carrier.
+Its length is 5.
+
+Where should the front of the ship be? (A-O):
+
+After selecting your column (by letter) and row (by number), you will then be prompted to select if the ship should face
+vertically or horizontally. 
+
+            Your Placement Board
+  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O
+1[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+2[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+3[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+4[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+5[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+6[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+7[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+8[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+9[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+10[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+11[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+12[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+13[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+14[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+15[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+What direction would you like the ship to face?
+1. Vertical
+2. Horizontal
+
+Your ship will then be placed UNLESS your ship overlaps with another ship in your fleet or
+is outside of the boundaries of the board.
+
+            Your Placement Board
+  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O
+1[A][A][A][A][A][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+2[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+3[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+4[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+5[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+6[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+7[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+8[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+9[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+10[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+11[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+12[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+13[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+14[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+15[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+
+You are placing the Battleship.
+Its length is 4.
+
+For an invalid entry, for example:
+
+            Your Placement Board
+  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O
+1[A][A][A][A][A][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+2[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+3[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+4[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+5[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+6[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+7[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+8[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+9[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+10[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+11[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+12[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+13[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+14[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+15[ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ][ ]
+
+You are placing the Battleship.
+Its length is 4.
+
+Where should the front of the ship be? (A-O): Q
+Please enter a valid starting position
+
+You are placing the Battleship.
+Its length is 4.
+Where should the front of the ship be? (A-O):
+
+After the ships have been positioned, the games proceeds as described above in rounds. In each round, the player takes a 
+turn to announce a target square in the opponent's grid which is to be shot at. These target squares will be typed
+by the player as letter first (corresponding to column) then number (corresponding to the row on the grid).
+
+For example, if you want to target column four, row four, you would type "D" for the column first then press enter. 
+Then, as the code prompts you for the row number, you would type "4" and press enter. This is the same as the command "D4".
+If you hit your opponent's ship, you will see a message confirming as such. If you don't, you will see a message saying, 
+"Missed!" This corresponds to a miss. 
+
+If you decide to enter an illegal sequence of characters other than the VALID letter/number combination, you will be granted
+the courtesy of entering those coordinates again.
+
+When you have hit a chunk of your opponent's ship, you will see a message corresponding to where you hit the ship
+and that hit ship will be displayed as an octothorpe/pound symbol ('#'). If you decided to target a spot and it's a miss,
+that miss will be shown as an '@'. 
+
+The following list of symbols are used to correspond to these in-game situations:
+
+-------------------------------------------------------
+|  Symbol   |               Meaning                   |
+-------------------------------------------------------
+|    A      |   Position of Player's Aircraft Carrier |
+-------------------------------------------------------
+|    B      |    Position of Player's Battleship      |
+-------------------------------------------------------
+|    S      |    Position of Player's Submarine       |
+-------------------------------------------------------
+|    C      |    Position of Player's Cruiser         |
+-------------------------------------------------------
+|    D      |    Position of Player's Destroyer       |
+-------------------------------------------------------
+|    @      |    Player/CPU fired here and missed     |
+------------------------------------------------------
+|    #      |    Player/CPU fired here and hit a ship |
+-------------------------------------------------------
+
+
+Your goal is to destroy your opponent's fleet. To do so, you will need to not only hit their ships in this version but
+to thoroughly destroy them. For example, to destroy the Aircraft Carrier ship, you will need to hit that ship five (5) times
+before it is destroyed. Similarly, you must destroy all other ships until you have destroyed the opponent's fleet. 
+
+Once you have won (or lost), you have the option to play again or to quit the game. Good luck and have fun!
+
+
